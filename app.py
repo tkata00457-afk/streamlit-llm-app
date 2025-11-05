@@ -1,14 +1,19 @@
+import os
 import streamlit as st
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
 @st.cache_resource(show_spinner=False)
 def get_llm():
-    api_key = st.secrets.get("OPENAI_API_KEY")
-    if not api_key:
+    # Secrets から取得 → 前後空白を除去 → 環境変数にも渡す（下層ライブラリ対策）
+    api_key = (st.secrets.get("OPENAI_API_KEY") or "").strip()
+    if not api_key or not api_key.startswith("sk-"):
         st.error("サーバ側の設定が不足しています。管理者に連絡してください。")
         st.stop()
+
+    os.environ["OPENAI_API_KEY"] = api_key  # 念のため
     return ChatOpenAI(model="gpt-4o-mini", temperature=0.4, api_key=api_key)
+
 
 def build_system_prompt(expert_choice: str) -> str:
     if expert_choice == "医療コンサルタント":
