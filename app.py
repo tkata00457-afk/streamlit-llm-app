@@ -1,5 +1,3 @@
-# app.py
-# 利用者にOPENAI_API_KEYを要求しない版（サーバ側Secretsのみ）
 import streamlit as st
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -8,10 +6,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 def get_llm():
     api_key = st.secrets.get("OPENAI_API_KEY")
     if not api_key:
-        st.error(
-            "サーバ側のSecretsに OPENAI_API_KEY が設定されていません。"
-            "開発者の方は Streamlit Cloud の『Settings → Secrets』で設定してください。"
-        )
+        st.error("サーバ側の設定が不足しています。管理者に連絡してください。")
         st.stop()
     return ChatOpenAI(model="gpt-4o-mini", temperature=0.4, api_key=api_key)
 
@@ -44,9 +39,6 @@ def ask_llm(user_input: str, expert_choice: str) -> str:
     resp = llm.invoke(messages)
     return resp.content
 
-# =======================
-# Streamlit UI
-# =======================
 st.set_page_config(page_title="LLM相談アプリ", page_icon="💬", layout="centered")
 
 st.title("💬 LLM相談アプリ")
