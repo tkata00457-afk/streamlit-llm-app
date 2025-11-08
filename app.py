@@ -3,6 +3,7 @@ import re
 import streamlit as st
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 @st.cache_resource(show_spinner=False)
 def get_llm(model: str = "gpt-4o-mini", temperature: float = 0.4) -> ChatOpenAI:
@@ -48,17 +49,18 @@ def build_system_prompt(expert_choice: str) -> str:
         "ユーザーの質問に対し、わかりやすく・実用的に回答してください。"
     )
 
-def ask_llm(user_input: str, expert_choice: str) -> str:
+ddef ask_llm(user_input: str, expert_choice: str) -> str:
     llm = get_llm()
     system_prompt = build_system_prompt(expert_choice)
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", "{system_prompt}"),
-        ("human", "{user_input}")
+        ("human", "{user_input}"),
     ])
 
-    chain = prompt | llm
-    resp = chain.invoke({"system_prompt": system_prompt, "user_input": user_input})
+    chain = prompt | llm | StrOutputParser()
+    text = chain.invoke({"system_prompt": system_prompt, "user_input": user_input})
+    return text
 
 st.set_page_config(page_title="LLM相談アプリ", page_icon="💬", layout="centered")
 
