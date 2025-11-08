@@ -4,15 +4,19 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
 @st.cache_resource(show_spinner=False)
-def get_llm():
-    # Secrets から取得 → 前後空白を除去 → 環境変数にも渡す（下層ライブラリ対策）
+def get_llm(model: str = "gpt-4o-mini", temperature: float = 0.4) -> ChatOpenAI:
     api_key = (st.secrets.get("OPENAI_API_KEY") or "").strip()
     if not api_key or not api_key.startswith("sk-"):
         st.error("サーバ側の設定が不足しています。管理者に連絡してください。")
         st.stop()
 
-    os.environ["OPENAI_API_KEY"] = api_key  # 念のため
-    return ChatOpenAI(model="gpt-4o-mini", temperature=0.4, api_key=api_key)
+    os.environ["OPENAI_API_KEY"] = api_key
+
+    try:
+        return ChatOpenAI(model=model, temperature=temperature, api_key=api_key)
+    except TypeError:
+        return ChatOpenAI(model_name=model, temperature=temperature, openai_api_key=api_key)
+
 
 
 def build_system_prompt(expert_choice: str) -> str:
