@@ -49,7 +49,7 @@ def build_system_prompt(expert_choice: str) -> str:
         "ユーザーの質問に対し、わかりやすく・実用的に回答してください。"
     )
 
-ddef ask_llm(user_input: str, expert_choice: str) -> str:
+def ask_llm(user_input: str, expert_choice: str) -> str:
     llm = get_llm()
     system_prompt = build_system_prompt(expert_choice)
 
