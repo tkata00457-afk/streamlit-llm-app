@@ -1,23 +1,31 @@
 import os
+import re
 import streamlit as st
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
 
 @st.cache_resource(show_spinner=False)
 def get_llm(model: str = "gpt-4o-mini", temperature: float = 0.4) -> ChatOpenAI:
-    api_key = (st.secrets.get("OPENAI_API_KEY") or "").strip()
-    if not api_key or not api_key.startswith("sk-"):
+    # Secrets → 正規化（前後空白・全角/ASCII引用符の除去・改行除去）
+    raw = st.secrets.get("OPENAI_API_KEY") or ""
+    s = raw.strip()
+
+    # 先頭末尾に付いた各種引用符を外す（ASCII/全角）
+    QUOTES = {'"', "'", '“', '”', '„', '‟', '「', '」', '『', '』'}
+    if len(s) >= 2 and s[0] in QUOTES and s[-1] in QUOTES:
+        s = s[1:-1].strip()
+
+    s = re.sub(r"\s+", "", s)
+
+    if not s.startswith("sk-") or len(s) < 20:
         st.error("サーバ側の設定が不足しています。管理者に連絡してください。")
         st.stop()
 
-    os.environ["OPENAI_API_KEY"] = api_key
+    os.environ["OPENAI_API_KEY"] = s
 
     try:
-        return ChatOpenAI(model=model, temperature=temperature, api_key=api_key)
+        return ChatOpenAI(model=model, temperature=temperature, api_key=s)
     except TypeError:
-        return ChatOpenAI(model_name=model, temperature=temperature, openai_api_key=api_key)
-
-
+        return ChatOpenAI(model_name=model, temperature=temperature, openai_api_key=s)
 
 def build_system_prompt(expert_choice: str) -> str:
     if expert_choice == "医療コンサルタント":
