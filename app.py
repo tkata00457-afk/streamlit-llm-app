@@ -2,6 +2,7 @@ import os
 import re
 import streamlit as st
 from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 @st.cache_resource(show_spinner=False)
 def get_llm(model: str = "gpt-4o-mini", temperature: float = 0.4) -> ChatOpenAI:
@@ -49,12 +50,15 @@ def build_system_prompt(expert_choice: str) -> str:
 
 def ask_llm(user_input: str, expert_choice: str) -> str:
     llm = get_llm()
-    messages = [
-        SystemMessage(content=build_system_prompt(expert_choice)),
-        HumanMessage(content=user_input),
-    ]
-    resp = llm.invoke(messages)
-    return resp.content
+    system_prompt = build_system_prompt(expert_choice)
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "{system_prompt}"),
+        ("human", "{user_input}")
+    ])
+
+    chain = prompt | llm
+    resp = chain.invoke({"system_prompt": system_prompt, "user_input": user_input})
 
 st.set_page_config(page_title="LLM相談アプリ", page_icon="💬", layout="centered")
 
